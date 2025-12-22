@@ -79,6 +79,19 @@ export const getUser = async (identifier) => {
     });
 };
 
+// Buscar usuário para endpoint /auth/me (sem retornar id)
+export const getUserByPublicId = async (publicId) => {
+    return prisma.user.findUnique({
+        where: { publicId },
+        select: {
+            publicId: true,
+            email: true,
+            createdAt: true,
+            favorites: true,
+        },
+    });
+};
+
 export const getAllUsers = async () => {
     return prisma.user.findMany({
         select: {
