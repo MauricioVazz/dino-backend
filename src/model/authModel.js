@@ -36,6 +36,7 @@ export const loginUser = async (credentials) => {
             publicId: true,
             email: true,
             password: true,
+            role: true,
             createdAt: true,
     },
     });
@@ -59,6 +60,7 @@ export const loginUser = async (credentials) => {
     return {
         publicId: user.publicId,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
     };
 }

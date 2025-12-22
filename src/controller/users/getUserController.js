@@ -2,10 +2,7 @@ import { getUser } from "../../model/userModel.js";
 
 export const getUserController = async (req, res) => {
     try {
-        const param = req.params.id;
-        const identifier = isNaN(param) ? param : parseInt(param);
-
-        const user = await getUser(identifier);
+        const user = await getUser(req.params.id);
 
         if (!user) {
             return res.status(404).json({

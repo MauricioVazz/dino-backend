@@ -2,11 +2,7 @@ import { updateUser } from "../../model/userModel.js";
 
 export const updateUserController = async (req, res) => {
     try {
-        const param = req.params.id;
-
-        const identifier = isNaN(param) ? param : parseInt(param);
-
-        const user = await updateUser(identifier, req.body);
+        const user = await updateUser(req.params.id, req.body);
 
         return res.status(200).json({
             success: true,

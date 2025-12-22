@@ -18,7 +18,10 @@ export const authMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // 4. Anexar os dados do usuário decodificados ao objeto req
-        req.user = decoded; // melhoria futura
+        req.user = {
+            sub: decoded.sub,
+            role: decoded.role
+        };
 
         // 5. Chamar o próximo middleware ou rota
         next();

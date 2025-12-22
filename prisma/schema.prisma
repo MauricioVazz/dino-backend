@@ -10,8 +10,11 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   publicId  String   @unique @default(uuid()) @map("public_id")
+  name      String
   email     String   @unique
   password  String
+  role      String   @default("user") // "user" ou "admin"
+  avatarUrl String?  // opcional
   createdAt DateTime @default(now()) @map("created_at")
 
   favorites FavoriteDino[]

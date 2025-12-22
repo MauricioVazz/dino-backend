@@ -5,64 +5,68 @@ import * as z from 'zod';
 
 const prisma = new PrismaClient();
 
-// Zod schema para User completo
-const userSchema = z.object({
-    id: z.number().int().positive().optional(),
-    publicId: z.string().uuid().optional(),
+// Helper para avatar
+function randomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '';
+    for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
+    return color;
+}
+
+function generateAvatar(name) {
+    const firstLetter = name[0].toUpperCase();
+    const color = randomColor();
+    return `https://ui-avatars.com/api/?name=${firstLetter}&background=${color}&color=fff&size=150`;
+}
+
+// Schemas
+const createUserSchema = z.object({
+    name: z.string({ required_error: 'Nome é obrigatório' }).min(2),
     email: z.string({ required_error: 'Email é obrigatório' }).email(),
     password: z.string({ required_error: 'Senha é obrigatória' }).min(6),
-    createdAt: z.date().optional(),
+    role: z.enum(['user', 'admin']).optional(),
+    avatarUrl: z.string().url().optional()
 });
 
-// Validação (partial para updates)
-const validateUser = (user, partial = false) => {
-    const schema = partial ? userSchema.partial() : userSchema;
-    const result = schema.safeParse(user);
-    if (result.success) return { success: true, data: result.data };
-    return { success: false, errors: result.error.flatten().fieldErrors };
-};
+const updateUserSchema = z.object({
+    name: z.string().min(2).optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(6).optional(),
+    avatarUrl: z.string().url().optional()
+});
 
 // Helper de where flexível
-const isUUID = (value) =>
-    typeof value === 'string' &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-
 const buildUserWhere = (identifier) => {
-    if (typeof identifier === 'number' && Number.isInteger(identifier)) {
-        return { id: identifier };
+    if (typeof identifier === 'string' && identifier.includes('-')) {
+        return { publicId: identifier };
     }
 
-    if (isUUID(identifier)) {
-        return { publicId: identifier };
+    if (typeof identifier === 'number') {
+        return { id: identifier };
     }
 
     throw new Error('Identificador inválido');
 };
 
 
+
 // CRUD
-export const createUser = async (userData) => {
-    const parsed = userSchema.safeParse(userData);
+export const createUser = async (data) => {
+    const parsed = createUserSchema.safeParse(data);
     if (!parsed.success) {
-        const err = new Error('Validation failed');
+        const err = new Error('Erro de validação');
         err.details = parsed.error.flatten().fieldErrors;
         throw err;
     }
 
     const email = parsed.data.email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(parsed.data.password, 10);
+    const role = parsed.data.role || 'user';
+    const avatarUrl = parsed.data.avatarUrl || generateAvatar(parsed.data.name);
 
     return prisma.user.create({
-        data: {
-            email,
-            password: hashedPassword,
-        },
-        select: {
-            id: true,
-            publicId: true,
-            email: true,
-            createdAt: true,
-        },
+        data: { name: parsed.data.name, email, password: hashedPassword, role, avatarUrl },
+        select: { id: true, publicId: true, name: true, email: true, role: true, avatarUrl: true, createdAt: true }
     });
 };
 
@@ -72,9 +76,18 @@ export const getUser = async (identifier) => {
         select: {
             id: true,
             publicId: true,
+            name: true,
             email: true,
+            role: true,
+            avatarUrl: true,
             createdAt: true,
-            favorites: true, // se quiser trazer favoritos
+            favorites: {
+            select: {
+                publicId: true,
+                dinoName: true,
+                createdAt: true
+            }
+}
         },
     });
 };
@@ -85,7 +98,10 @@ export const getUserByPublicId = async (publicId) => {
         where: { publicId },
         select: {
             publicId: true,
+            name: true,
             email: true,
+            role: true,
+            avatarUrl: true,
             createdAt: true,
             favorites: true,
         },
@@ -97,41 +113,34 @@ export const getAllUsers = async () => {
         select: {
             id: true,
             publicId: true,
+            name: true,
             email: true,
+            role: true,
+            avatarUrl: true,
             createdAt: true,
         },
     });
 };
 
-export const updateUser = async (identifier, user) => {
-    const validated = validateUser(user, true);
-    if (!validated.success) {
-        const err = new Error('Validation failed');
-        err.details = validated.errors;
+export const updateUser = async (identifier, data) => {
+    const parsed = updateUserSchema.safeParse(data);
+    if (!parsed.success) {
+        const err = new Error('Erro de validação');
+        err.details = parsed.error.flatten().fieldErrors;
         throw err;
     }
 
-    // Dados validados
-    const { email, password } = validated.data;
-
-    // Senha com hash se fornecida
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
-
-    // Construir objeto data dinamicamente
-    const data = {
-        ...(email && { email: email.trim().toLowerCase() }),
-        ...(hashedPassword && { password: hashedPassword }),
+    const updateData = {
+        ...(parsed.data.name && { name: parsed.data.name }),
+        ...(parsed.data.email && { email: parsed.data.email.trim().toLowerCase() }),
+        ...(parsed.data.password && { password: await bcrypt.hash(parsed.data.password, 10) }),
+        ...(parsed.data.avatarUrl && { avatarUrl: parsed.data.avatarUrl }),
     };
-    
+
     return prisma.user.update({
         where: buildUserWhere(identifier),
-        data,
-        select: {
-            id: true,
-            publicId: true,
-            email: true,
-            createdAt: true,
-        },
+        data: updateData,
+        select: { id: true, publicId: true, name: true, email: true, role: true, avatarUrl: true, createdAt: true }
     });
 };
 
