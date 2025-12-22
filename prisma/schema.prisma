@@ -22,14 +22,20 @@ model User {
   @@map("users")
 }
 
+
 model FavoriteDino {
   id        Int      @id @default(autoincrement())
   publicId  String   @unique @default(uuid()) @map("public_id")
+
   dinoName  String   @map("dino_name")
+
   userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Regra de domínio garantida no banco
+  @@unique([userId, dinoName])
 
   @@map("favorite_dinos")
 }

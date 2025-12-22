@@ -4,6 +4,7 @@ import cors from 'cors';
 // Importar rotas
 import userRouter from './routers/userRouter.js';
 import authRouter from './routers/authRouter.js'
+import favoriteDinoRouter from './routers/favoriteDinoRouter.js';
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.get('/health', (req, res) => {
 // Rotas
 app.use('/users', userRouter);
 app.use('/auth', authRouter)
+app.use('/favorites', favoriteDinoRouter);
 
 export default app;
