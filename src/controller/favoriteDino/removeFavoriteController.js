@@ -1,4 +1,4 @@
-import { favoriteDinoService } from '../../services/favoriteDinoService.js';
+import { favoriteDinoService } from '../../services/dino/favoriteDinoService.js';
 
 export async function removeFavoriteController(req, res) {
     try {

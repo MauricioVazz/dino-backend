@@ -1,6 +1,6 @@
 import * as z from 'zod';
-import { getDinoSummary } from '../adapters/wikipedia/getDinoSummary.js';
-import { favoriteDinoModel } from '../model/favoriteDinoModel.js';
+import { getDinoSummary } from '../../adapters/wikipedia/getDinoSummary.js';
+import { favoriteDinoModel } from '../../model/favoriteDinoModel.js';
 
 // Schema de validação
 const favoriteSchema = z.object({

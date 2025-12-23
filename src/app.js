@@ -5,6 +5,7 @@ import cors from 'cors';
 import userRouter from './routers/userRouter.js';
 import authRouter from './routers/authRouter.js'
 import favoriteDinoRouter from './routers/favoriteDinoRouter.js';
+import dinoRouter from './routers/dinoRouter.js';
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.get('/health', (req, res) => {
 app.use('/users', userRouter);
 app.use('/auth', authRouter)
 app.use('/favorites', favoriteDinoRouter);
+app.use('/dinos', dinoRouter);
 
 export default app;
